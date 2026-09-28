@@ -1,5 +1,6 @@
 package com.natived.spock.demo.nativedspocktestdemo.spock
 
+import com.natived.spock.demo.nativedspocktestdemo.NativedSpockTestDemoApplication
 import com.natived.spock.demo.nativedspocktestdemo.model.*
 import com.natived.spock.demo.nativedspocktestdemo.repository.HistoryGradesDAO
 import com.natived.spock.demo.nativedspocktestdemo.repository.MahtGradesDAO
@@ -9,15 +10,17 @@ import com.natived.spock.demo.nativedspocktestdemo.service.StudentAndGradeServic
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.TestPropertySource
 import spock.lang.Shared
 import spock.lang.Specification
-import spock.lang.Subject
 import spock.lang.Unroll
 
 @TestPropertySource("/application-test.properties")
 @SpringBootTest
+@ContextConfiguration(classes = NativedSpockTestDemoApplication)
 class StudentAndGradeServiceSpockTest extends Specification {
 
     @Autowired
@@ -76,16 +79,13 @@ class StudentAndGradeServiceSpockTest extends Specification {
         jdbc.execute(sqlDeleteHistoryGrade)
     }
 
-    @Subject
-    StudentAndGradeService service = new StudentAndGradeService()
-
     @Shared
     def studentEmail = "chad.darby@luv2code_school.com"
 
     @Unroll
     def 'createStudentService - #studentFirstName, #studentLastName, #studentEmail'() {
         when:
-        service.createStudent(studentFirstName, studentLastName, studentEmail)
+        studentService.createStudent(studentFirstName, studentLastName, studentEmail)
 
         then:
         def student = studentDao.findByEmailAddress(studentEmail)
@@ -98,28 +98,25 @@ class StudentAndGradeServiceSpockTest extends Specification {
 
     def 'isStudentNullCheck'() {
         expect:
-        service.checkIfStudentIsNull(1) == true
-        service.checkIfStudentIsNull(0) == false
+        studentService.checkIfStudentIsNull(1)
+        !studentService.checkIfStudentIsNull(0)
     }
 
     def 'deleteStudentService'() {
         given:
         def deletedCollegeStudent = studentDao.findById(1)
-        def deletedMathGrade = mathGradeDao.findById(1)
-        def deletedHistoryGrade = historyGradeDao.findById(1)
-        def deletedScienceGrade = scienceGradeDao.findById(1)
 
         expect:
-        deletedCollegeStudent.isPresent() == true
+        deletedCollegeStudent.isPresent()
 
         when:
-        service.deleteStudent(1)
+        studentService.deleteStudent(1)
 
         then:
-        studentDao.findById(1).isPresent() == false
-        mathGradeDao.findById(1).isPresent() == false
-        scienceGradeDao.findById(1).isPresent() == false
-        historyGradeDao.findById(1).isPresent() == false
+        !studentDao.findById(1).isPresent()
+        !mathGradeDao.findById(1).isPresent()
+        !scienceGradeDao.findById(1).isPresent()
+        !historyGradeDao.findById(1).isPresent()
     }
 
 }
